@@ -23,7 +23,7 @@ defmodule ExBanking do
           {:ok, new_balance :: number}
           | {:error, :wrong_arguments | :user_does_not_exist | :too_many_requests_to_user}
   def deposit(user, amount, currency)
-      when is_binary(currency) and is_binary(user) and is_number(amount) and amount >= 0 do
+      when is_binary(currency) and is_binary(user) and is_number(amount) and amount > 0 do
     Bank.deposit(user, amount, currency) |> format_balance_return()
   end
 
@@ -42,7 +42,7 @@ defmodule ExBanking do
              | :too_many_requests_to_user}
 
   def withdraw(user, amount, currency)
-      when is_binary(currency) and is_binary(user) and is_number(amount) and amount >= 0 do
+      when is_binary(currency) and is_binary(user) and is_number(amount) and amount > 0 do
     Bank.withdraw(user, amount, currency) |> format_balance_return()
   end
 
@@ -79,12 +79,20 @@ defmodule ExBanking do
              | :receiver_does_not_exist
              | :too_many_requests_to_sender
              | :too_many_requests_to_receiver}
-  def send(_from_user, _to_user, _amount, _currency) do
-    {:error, :wrong_arguments}
+  def send(from_user, to_user, amount, currency)
+      when is_binary(currency) and is_binary(from_user) and is_binary(to_user) and
+             is_number(amount) and amount > 0 do
+    Bank.send(from_user, to_user, amount, currency) |> format_balance_return()
   end
+
+  def send(_from_user, _to_user, _amount, _currency), do: {:error, :wrong_arguments}
 
   defp format_balance_return({:ok, balance}) do
     {:ok, balance / 100}
+  end
+
+  defp format_balance_return({:ok, from_user_balance, to_user_balance}) do
+    {:ok, from_user_balance / 100, to_user_balance / 100}
   end
 
   defp format_balance_return(error), do: error

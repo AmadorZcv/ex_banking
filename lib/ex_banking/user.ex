@@ -16,15 +16,20 @@ defmodule ExBanking.User do
       {:error, :user_does_not_exist}
   end
 
-  def deposit(user, amount, currency) do
-    update_balance(user, amount, currency)
+  # Fast type should only be used for returns
+  def deposit(user, amount, currency, type \\ :regular) do
+    update_balance(user, amount, currency, type)
   end
 
   def withdraw(user, amount, currency) do
-    update_balance(user, -amount, currency)
+    update_balance(user, -amount, currency, :regular)
   end
 
-  defp update_balance(user, amount, currency) do
+  defp update_balance(user, amount, currency, :fast) do
+    GenServer.cast(server_name(user), {:update_balance, amount, currency})
+  end
+
+  defp update_balance(user, amount, currency, _type) do
     with {:ok, _requests} <- increase_user_requests(user) do
       result = GenServer.call(server_name(user), {:update_balance, amount, currency})
 
@@ -103,5 +108,14 @@ defmodule ExBanking.User do
     else
       {:noreply, %{state | user_requests: user_requests - 1}}
     end
+  end
+
+  @impl true
+  def handle_cast(
+        {:update_balance, amount, currency},
+        %{currencies: currencies} = state
+      ) do
+    new_amount = Map.get(currencies, currency, 0) + amount
+    {:noreply, %{state | currencies: Map.put(currencies, currency, new_amount)}}
   end
 end

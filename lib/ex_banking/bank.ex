@@ -28,4 +28,46 @@ defmodule ExBanking.Bank do
       {:ok, Map.get(currencies, currency, 0)}
     end
   end
+
+  def send(from_user, to_user, amount, currency) do
+    with {:ok, _from_user} <- User.get(from_user) |> handle_from_user_errors,
+         {:ok, _from_user} <- User.get(to_user) |> handle_to_user_errors,
+         {:ok, from_user_balance} <-
+           User.withdraw(from_user, amount, currency) |> handle_from_user_errors,
+         {:ok, to_user_balance} <-
+           User.deposit(to_user, amount, currency) |> handle_to_user_errors do
+      {:ok, from_user_balance, to_user_balance}
+    else
+      {:error, :too_many_requests_to_receiver} ->
+        User.deposit(from_user, amount, currency, :fast)
+        {:error, :too_many_requests_to_receiver}
+
+      error ->
+        error
+    end
+  end
+
+  defp handle_from_user_errors({:error, :user_does_not_exist}),
+    do: {:error, :sender_does_not_exist}
+
+  defp handle_from_user_errors({:error, :not_enough_money}),
+    do: {:error, :not_enough_money}
+
+  defp handle_from_user_errors({:error, :too_many_requests_to_user}),
+    do: {:error, :too_many_requests_to_sender}
+
+  defp handle_from_user_errors({:ok, state}),
+    do: {:ok, state}
+
+  defp handle_to_user_errors({:error, :user_does_not_exist}),
+    do: {:error, :receiver_does_not_exist}
+
+  defp handle_to_user_errors({:error, :not_enough_money}),
+    do: {:error, :not_enough_money}
+
+  defp handle_to_user_errors({:error, :too_many_requests_to_user}),
+    do: {:error, :too_many_requests_to_receiver}
+
+  defp handle_to_user_errors({:ok, state}),
+    do: {:ok, state}
 end

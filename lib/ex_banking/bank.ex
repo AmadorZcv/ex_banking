@@ -14,16 +14,18 @@ defmodule ExBanking.Bank do
   def deposit(user, amount, currency) do
     with {:ok, _user} <- User.get(user) do
       User.deposit(user, amount, currency)
-    else
-      error -> error
     end
   end
 
   def withdraw(user, amount, currency) do
     with {:ok, _user} <- User.get(user) do
       User.withdraw(user, amount, currency)
-    else
-      error -> error
+    end
+  end
+
+  def get_balance(user, currency) do
+    with {:ok, %{currencies: currencies}} <- User.get(user) do
+      {:ok, Map.get(currencies, currency, 0)}
     end
   end
 end

@@ -55,9 +55,11 @@ defmodule ExBanking do
   @spec get_balance(user :: String.t(), currency :: String.t()) ::
           {:ok, balance :: number}
           | {:error, :wrong_arguments | :user_does_not_exist | :too_many_requests_to_user}
-  def get_balance(_user, _currency) do
-    {:error, :wrong_arguments}
+  def get_balance(user, currency) when is_binary(currency) and is_binary(user) do
+    Bank.get_balance(user, currency) |> format_balance_return()
   end
+
+  def get_balance(_user, _currency), do: {:error, :wrong_arguments}
 
   @doc """
   Send money from a user to another in a currency

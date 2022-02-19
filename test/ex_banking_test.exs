@@ -77,4 +77,29 @@ defmodule ExBankingTest do
       assert {:error, :wrong_arguments} == ExBanking.withdraw("user", -10, "currency")
     end
   end
+
+  describe "get_balance/2" do
+    setup do
+      ExBanking.create_user("user")
+      ExBanking.deposit("user", 10, "currency")
+      :ok
+    end
+
+    test "success get_balance" do
+      assert {:ok, 0.10} == ExBanking.get_balance("user", "currency")
+    end
+
+    test "success get_balance in different currency" do
+      assert {:ok, 0.0} == ExBanking.get_balance("user", "currency2")
+    end
+
+    test "fail when user does not exist" do
+      assert {:error, :user_does_not_exist} == ExBanking.get_balance("user2", "currency2")
+    end
+
+    test "fail when wrong arguments" do
+      assert {:error, :wrong_arguments} == ExBanking.get_balance(nil, "currency2")
+      assert {:error, :wrong_arguments} == ExBanking.get_balance("user", nil)
+    end
+  end
 end

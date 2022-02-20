@@ -24,8 +24,8 @@ defmodule ExBanking.Bank do
   end
 
   def get_balance(user, currency) do
-    with {:ok, %{currencies: currencies}} <- User.get(user) do
-      {:ok, Map.get(currencies, currency, 0)}
+    with {:ok, _user} <- User.get(user) do
+      User.get_balance(user, currency)
     end
   end
 
